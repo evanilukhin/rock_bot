@@ -19,3 +19,15 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/rock_bot](https://hexdocs.pm/rock_bot).
 
+## Release
+
+rename config/erlang_cookie.example to config/erlang_cookie
+generate cookie and put in this file
+run
+```sh
+export REPLACE_OS_VARS=true
+```
+run
+```sh
+MIX_ENV=prod mix release
+```

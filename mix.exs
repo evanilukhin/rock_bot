@@ -26,7 +26,8 @@ defmodule RockBot.MixProject do
       {:httpoison, "~> 1.3.1", override: true},
       {:jason, "~> 1.0"},
       {:amqp, "~> 1.0"},
-      {:ranch_proxy_protocol, "~> 2.0", override: true}
+      {:ranch_proxy_protocol, "~> 2.0", override: true},
+      {:distillery, "~> 2.0"}
     ]
   end
 end
