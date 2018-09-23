@@ -1,7 +1,8 @@
 defmodule RockBot.AmqpProcessor do
-  use GenServer
-  use AMQP
   alias RockBot.Config
+
+  use GenServer
+  use AMQP  
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, [], opts)

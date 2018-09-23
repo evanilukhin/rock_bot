@@ -27,7 +27,8 @@ defmodule RockBot.MixProject do
       {:jason, "~> 1.0"},
       {:amqp, "~> 1.0"},
       {:ranch_proxy_protocol, "~> 2.0", override: true},
-      {:distillery, "~> 2.0"}
+      {:distillery, "~> 2.0", runtime: false},
+      {:credo, "~> 0.10.0", only: [:dev, :test], runtime: false}
     ]
   end
 end
