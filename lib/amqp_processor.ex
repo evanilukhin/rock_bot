@@ -1,8 +1,9 @@
 defmodule RockBot.AmqpProcessor do
   alias RockBot.Config
+  require Logger
 
   use GenServer
-  use AMQP  
+  use AMQP
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, [], opts)
@@ -13,13 +14,21 @@ defmodule RockBot.AmqpProcessor do
   @web_exchange  "rock_web_exchange"
   @web_queue     "rock_web_queue"
 
-  def init(_opts) do
-    {:ok, conn} = connection_url() |> Connection.open
-    {:ok, chan} = Channel.open(conn)
-    setup_queue(chan)
-    :ok = Basic.qos(chan, prefetch_count: 10)
-    {:ok, _consumer_tag} = Basic.consume(chan, @web_queue)
-    {:ok, chan}
+  def init(opts) do
+    connection_url = Config.AMQP.rabbitmq_connection_url()
+    case Connection.open(connection_url) do
+      {:ok, conn}  ->
+        {:ok, chan} = Channel.open(conn)
+        setup_queue(chan)
+        :ok = Basic.qos(chan, prefetch_count: 10)
+        {:ok, _consumer_tag} = Basic.consume(chan, @web_queue)
+        {:ok, chan}
+      {:error, :econnrefused} ->
+        Logger.warn("RabbitMQ with connection_url: \"#{connection_url}\" is not working. Waiting the service.")
+        Config.AMQP.restart_timeout() |> :timer.sleep
+        __MODULE__.init(opts)
+      result -> Logger.error("Unexpected result: #{result}")
+    end
   end
 
   # Confirmation sent by the broker after registering this process as a consumer
@@ -57,13 +66,11 @@ defmodule RockBot.AmqpProcessor do
   end
 
   defp consume(channel, tag, _redelivered, payload) do
-    {:ok, decoded_payload} = Jason.decode(payload)
-    message = "#{decoded_payload["name"]} said \"#{decoded_payload["message"]}\""
-    Nadia.send_message("@chat_through_evanilukhin_rockbot", message)
-    :ok = Basic.ack channel, tag
-  end
-
-  defp connection_url do
-    "amqp://#{Config.AMQP.username()}:#{Config.AMQP.password()}@#{Config.AMQP.host()}"
+    case RockBot.send_message(payload) do
+      :ok ->
+        Basic.ack channel, tag
+      _ ->
+        Logger.error("Message #{payload} was not proceed")  
+    end
   end
 end
